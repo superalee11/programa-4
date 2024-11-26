@@ -9,7 +9,7 @@ void normalizarVector(double vector[], int n) {
         norma += vector[i] * vector[i];
     }
     norma = sqrt(norma);
-    if (fabs(norma - 1.0) > 1e-6) { 
+    if (fabs(norma - 1.0) > 1e-6) {
         printf("\tEl vector inicial no tiene norma espectral 1. Se normalizara automaticamente.\n");
         for (int i = 0; i < n; i++) {
             vector[i] /= norma;
@@ -17,7 +17,7 @@ void normalizarVector(double vector[], int n) {
     }
 }
 
-void metodoPotencias(double matriz[MAX][MAX], double vector[], int n, double tol, int max_iter) {
+double metodoPotencias(double matriz[MAX][MAX], double vector[], int n, double tol, int max_iter, int inverso, int *iteracion_final, double vector_resultante[MAX]) {
     double lambda_anterior = 0.0, lambda;
     double nuevo_vector[MAX];
     int iter;
@@ -45,13 +45,11 @@ void metodoPotencias(double matriz[MAX][MAX], double vector[], int n, double tol
         }
 
         if (fabs(lambda - lambda_anterior) < tol) {
-            printf("\tConvergencia alcanzada en iteracion: %d\n", iter);
-            printf("\tEl mayor valor propio aproximado es: %.6lf\n", lambda);
-            printf("\tEl vector propio correspondiente es:\n");
+            *iteracion_final = iter;
             for (int i = 0; i < n; i++) {
-                printf("\t%.6lf\n", nuevo_vector[i]);
+                vector_resultante[i] = nuevo_vector[i];
             }
-            return;
+            return inverso ? 1.0 / lambda : lambda;
         }
 
         lambda_anterior = lambda;
@@ -60,25 +58,23 @@ void metodoPotencias(double matriz[MAX][MAX], double vector[], int n, double tol
         }
     }
 
-    printf("\tNo se alcanzo convergencia en el numero maximo de iteraciones.\n");
-    printf("\tEl mayor valor propio aproximado es: %.6lf\n", lambda);
-    printf("\tEl vector propio correspondiente es:\n");
+    *iteracion_final = max_iter;
     for (int i = 0; i < n; i++) {
-        printf("%.6lf\n", nuevo_vector[i]);
+        vector_resultante[i] = nuevo_vector[i];
     }
+    return inverso ? 1.0 / lambda : lambda;
 }
 
 int main() {
-    
-    printf("\n\t\t\t METODO DE POTENCIAS\n\n");
+     printf("\n\t\t\t METODO DE POTENCIAS\n\n");
     printf("\t\t   Metodos numericos - Grupo 1301\n \n");
     printf("\t Alcantar Hernandez Jessica Esmeralda\n");
     printf("\t Fierro Ibanez Andrea Esteph\n");
     printf("\t Jaimes Molina Andrea\n");
     printf("\t Lopez Ramirez Mariana Alejandra\n \n \n");
     
-    int n, max_iter, fila, columna;
-    double matriz[MAX][MAX], vector[MAX], tol;
+    int n, max_iter, iter_max, iter_min;
+    double matriz[MAX][MAX], vector[MAX], tol, vector_max[MAX], vector_min[MAX];
 
     printf("\tIngresa la dimension de la matriz cuadrada: ");
     scanf("%d", &n);
@@ -88,23 +84,6 @@ int main() {
         for (int j = 0; j < n; j++) {
             printf("\tElemento [%d, %d]: ", i + 1, j + 1);
             scanf("%lf", &matriz[i][j]);
-        }
-    }
-
-    char respuesta;
-    while (1) {
-        printf("\t¿Deseas corregir algun coeficiente de la matriz? (s/n): ");
-        scanf(" %c", &respuesta);
-        if (respuesta == 's' || respuesta == 'S') {
-            printf("\tIngresa la fila del coeficiente incorrecto: ");
-            scanf("%d", &fila);
-            printf("\tIngresa la columna del coeficiente incorrecto: ");
-            scanf("%d", &columna);
-            printf("\tIngresa el nuevo valor: ");
-            scanf("%lf", &matriz[fila - 1][columna - 1]);
-            printf("\tCoeficiente actualizado exitosamente.\n");
-        } else {
-            break;
         }
     }
 
@@ -121,7 +100,31 @@ int main() {
     printf("\tIngresa el numero maximo de iteraciones: ");
     scanf("%d", &max_iter);
 
-    metodoPotencias(matriz, vector, n, tol, max_iter);
+    double vector_copia[MAX];
+    for (int i = 0; i < n; i++) {
+        vector_copia[i] = vector[i];
+    }
+
+    double lambda_max = metodoPotencias(matriz, vector, n, tol, max_iter, 0, &iter_max, vector_max);
+
+    
+    double lambda_min = metodoPotencias(matriz, vector_copia, n, tol, max_iter, 1, &iter_min, vector_min);
+
+    
+    printf("\nResultados finales:\n");
+    printf("\tEl valor propio maximo es: %.6lf\n", lambda_max);
+    printf("\tSe alcanzo en la iteracion: %d\n", iter_max);
+    printf("\tEl vector propio correspondiente es:\n");
+    for (int i = 0; i < n; i++) {
+        printf("\t%.6lf\n", vector_max[i]);
+    }
+
+    printf("\n\tEl valor propio minimo es: %.6lf\n", lambda_min);
+    printf("\tSe alcanzo en la iteracion: %d\n", iter_min);
+    printf("\tEl vector propio correspondiente es:\n");
+    for (int i = 0; i < n; i++) {
+        printf("\t%.6lf\n", vector_min[i]);
+    }
 
     return 0;
 }
